@@ -1,0 +1,16 @@
+[Unit]
+Description=AUTOY Telegram control bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=autoy
+WorkingDirectory=/opt/autoy
+EnvironmentFile=/opt/autoy/.env
+ExecStart=/opt/autoy/.venv/bin/autoy bot
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=AUTOY Shorts scheduler
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=autoy
+WorkingDirectory=/opt/autoy
+EnvironmentFile=/opt/autoy/.env
+ExecStart=/opt/autoy/.venv/bin/autoy scheduler geo
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
