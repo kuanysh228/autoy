@@ -1,0 +1,19 @@
+x-autoy: &autoy
+  build: .
+  restart: unless-stopped
+  env_file: .env
+  volumes:
+    - ./credentials:/app/credentials
+    - ./data:/app/data
+    - ./output:/app/output
+    - ./cache:/app/cache
+    # - ./channels.toml:/app/channels.toml:ro   # create the file first (see channels.example.toml)
+
+services:
+  bot:
+    <<: *autoy
+    command: ["bot"]
+
+  scheduler:
+    <<: *autoy
+    command: ["scheduler", "world"]

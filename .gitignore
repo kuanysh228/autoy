@@ -1,3 +1,4 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -7,9 +8,15 @@ dist/
 venv/
 .pytest_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 
+# Secrets and local state
 .env
+.env.*
+!.env.example
 credentials/
+channels.toml
 output/
 cache/
 models/
@@ -17,5 +24,7 @@ data/*.db
 data/music/*
 !data/music/.gitkeep
 
+# Editors / OS
+.idea/
+.vscode/
 .DS_Store
-.claude/

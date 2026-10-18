@@ -76,15 +76,15 @@ def test_help_and_unknown(router):
 
 def test_schedule_lifecycle(router):
     cmd, service = router
-    cmd.dispatch(1, "/schedule_add geo 10:00")
+    cmd.dispatch(1, "/schedule_add world 10:00")
     assert "Added: id=1" in last_reply(service)
-    cmd.dispatch(1, "/schedule_add geo 25:00")
+    cmd.dispatch(1, "/schedule_add world 25:00")
     assert last_reply(service) == "Error: Invalid time"
     cmd.dispatch(1, "/schedule_add nope 10:00")
     assert last_reply(service).startswith("Error: Unknown channel")
     cmd.dispatch(1, "/schedule_off 1")
     cmd.dispatch(1, "/schedule")
-    assert "1. 10:00 | geo | off" in last_reply(service)
+    assert "1. 10:00 | world | off" in last_reply(service)
     cmd.dispatch(1, "/schedule_remove 1")
     assert last_reply(service) == "Removed."
     cmd.dispatch(1, "/schedule_clear")
@@ -112,7 +112,7 @@ def test_create_and_weekly_now_spawn_background(router, monkeypatch: pytest.Monk
     cmd.dispatch(1, "/create ai Nvidia earnings")
     cmd.dispatch(1, "/create custom topic")
     cmd.dispatch(1, "/weekly_now")
-    assert service.started == [("shorts", "ai", "Nvidia earnings"), ("shorts", "geo", "custom topic"), ("weekly", "geo")]
+    assert service.started == [("shorts", "ai", "Nvidia earnings"), ("shorts", "world", "custom topic"), ("weekly", "world")]
 
 
 def test_status_and_quota(router):

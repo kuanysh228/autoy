@@ -31,7 +31,7 @@ def _clean_title(title: str) -> str:
 
 
 def search(topic: str, lang: str, limit: int = 5, timeout: int = 20) -> list[RssItem]:
-    hl, gl, ceid = _LOCALES.get(lang, _LOCALES["ru"])
+    hl, gl, ceid = _LOCALES.get(lang, _LOCALES["en"])
     url = f"https://news.google.com/rss/search?q={quote_plus(f'{topic} when:7d')}&hl={hl}&gl={gl}&ceid={ceid}"
     with urlopen(Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=timeout) as response:
         root = ElementTree.fromstring(response.read())

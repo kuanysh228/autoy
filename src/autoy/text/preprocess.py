@@ -221,7 +221,7 @@ def assert_language_safe(text: str, lang: str) -> None:
         raise TextQualityError(f"text is not Russian: latin_ratio={latin_ratio:.2f}")
 
 
-def preprocess(text: str, lang: str = "ru") -> str:
+def preprocess(text: str, lang: str = "en") -> str:
     text = _remove_technical_strings(text)
     text = remove_source_refs(text)
     if lang == "ru":
@@ -233,7 +233,7 @@ def preprocess(text: str, lang: str = "ru") -> str:
     return _clean_whitespace(text)
 
 
-def prepare_voiceover_text(text: str, lang: str = "ru", min_chars: int = 240) -> str:
+def prepare_voiceover_text(text: str, lang: str = "en", min_chars: int = 240) -> str:
     clean = preprocess(text, lang=lang)
     assert_voiceover_safe(clean, min_chars=min_chars)
     assert_language_safe(clean, lang=lang)

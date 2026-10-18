@@ -1,27 +1,32 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "autoy"
 version = "1.0.0"
-description = "Autonomous news-to-video pipeline: NewsScout → TTS → ffmpeg render → YouTube Shorts / weekly digest, controlled from Telegram"
+description = "Autonomous news-to-video pipeline: research, script, voice, render and upload YouTube Shorts and weekly digests, controlled from Telegram"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Kuanysh" }]
-keywords = ["youtube", "shorts", "automation", "tts", "ffmpeg", "telegram", "news"]
+keywords = ["youtube", "shorts", "automation", "tts", "ffmpeg", "telegram", "news", "video-generation", "content-automation"]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Topic :: Multimedia :: Video",
+    "Topic :: Internet :: WWW/HTTP",
 ]
 dependencies = [
-    "edge-tts>=7.0",
+    "edge-tts>=7.3.1",
     "gTTS>=2.5",
     "Pillow>=10.0",
     "requests>=2.31",
@@ -45,6 +50,8 @@ autoy = "autoy.cli:main"
 [project.urls]
 Homepage = "https://github.com/kuanysh228/autoy"
 Repository = "https://github.com/kuanysh228/autoy"
+Issues = "https://github.com/kuanysh228/autoy/issues"
+Changelog = "https://github.com/kuanysh228/autoy/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

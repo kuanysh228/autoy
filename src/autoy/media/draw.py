@@ -102,9 +102,8 @@ def draw_stroked(draw: ImageDraw.ImageDraw, xy: tuple[int, int], text: str, font
 
 
 def draw_badge(draw: ImageDraw.ImageDraw, text: str, y: int, font: Font, accent: RGB, width: int, pad_x: int, pad_y: int) -> int:
-    box = draw.textbbox((0, 0), text, font=font)
-    text_w, text_h = box[2] - box[0], box[3] - box[1]
-    x = (width - text_w) // 2
-    draw.rectangle([x - pad_x, y - pad_y, x + text_w + pad_x, y + text_h + pad_y], fill=accent)
+    left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
+    x = (width - (right - left)) // 2 - left
+    draw.rectangle([x + left - pad_x, y + top - pad_y, x + right + pad_x, y + bottom + pad_y], fill=accent)
     draw_shadowed(draw, (x, y), text, font, WHITE)
-    return y + text_h
+    return y + bottom

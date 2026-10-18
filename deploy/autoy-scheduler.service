@@ -1,5 +1,5 @@
 [Unit]
-Description=AUTOY Shorts scheduler
+Description=autoy Shorts scheduler
 After=network-online.target
 Wants=network-online.target
 
@@ -8,7 +8,7 @@ Type=simple
 User=autoy
 WorkingDirectory=/opt/autoy
 EnvironmentFile=/opt/autoy/.env
-ExecStart=/opt/autoy/.venv/bin/autoy scheduler geo
+ExecStart=/opt/autoy/.venv/bin/autoy scheduler world
 Restart=always
 RestartSec=60
 

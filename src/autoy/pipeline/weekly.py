@@ -12,6 +12,7 @@ from autoy.media import WeeklyStyle, WeeklyVideo, pick_music
 from autoy.models import WeeklyStory
 from autoy.pipeline.context import AppContext
 from autoy.publish import VideoMetadata, YouTubeClient, watch_url
+from autoy.strings import strings_for
 from autoy.tts import synthesize
 
 log = logging.getLogger(__name__)
@@ -66,18 +67,19 @@ def _timestamp(seconds: float) -> str:
 
 
 def weekly_title(stories: list[WeeklyStory], channel: Channel) -> str:
+    text = strings_for(channel.lang)
     lead = (stories[0].title if stories else "").strip().rstrip(".")
     if len(lead) > _LEAD_MAX_CHARS:
         lead = lead[:_LEAD_MAX_CHARS].rsplit(" ", 1)[0].rstrip(" ,;:—-")
-    tail = " — your world this week" if channel.is_english else " — твой мир за неделю"
-    title = f"{lead}{tail}" if lead else f"Главное за неделю | {channel.name}"
+    title = f"{lead}{text.weekly_title_tail}" if lead else text.weekly_title_fallback.format(channel=channel.name)
     return title if len(title) <= _TITLE_MAX_CHARS else title[: _TITLE_MAX_CHARS - 1] + "…"
 
 
 def weekly_metadata(stories: list[WeeklyStory], channel: Channel, segment_starts: list[float], week: WeekLabel) -> VideoMetadata:
-    lines = [f"📰 Главные события недели {week.compact}", "", "В этом выпуске:"]
+    text = strings_for(channel.lang)
+    lines = [text.weekly_heading.format(week=week.compact), "", text.weekly_contents]
     lines += [f"  • {story.label}: {story.title[:70]}" for story in stories]
-    lines += ["", "─" * 45, "", "🕐 ТАЙМКОДЫ", "0:00 Введение"]
+    lines += ["", "─" * 45, "", text.weekly_chapters, f"0:00 {text.weekly_intro_chapter}"]
     for index, story in enumerate(stories):
         start = segment_starts[index] if index < len(segment_starts) else 0.0
         lines.append(f"{_timestamp(start)} {story.label}: {story.title[:60]}")
@@ -85,26 +87,11 @@ def weekly_metadata(stories: list[WeeklyStory], channel: Channel, segment_starts
         "",
         "─" * 45,
         "",
-        "🔔 Подписывайтесь, чтобы не пропускать еженедельные итоги!",
-        "👍 Ставьте лайк, если было полезно",
-        "💬 Пишите в комментариях — какая тема вас задела больше всего?",
+        *text.weekly_cta,
         "",
-        f"#{channel.name.replace(' ', '')} #ИтогиНедели #НовостиНедели #Геополитика #МировыеНовости #Новости #Weekly",
+        text.weekly_hashtags.format(channel=channel.name.replace(" ", "")),
     ]
-    tags = [
-        "итоги недели",
-        "новости недели",
-        "еженедельный обзор",
-        "главные новости",
-        "мировые новости",
-        "геополитика",
-        "weekly news",
-        "world news",
-        "политика",
-        "международные новости",
-        channel.name.lower(),
-        week.compact,
-    ]
+    tags = [*text.weekly_tags, *channel.hashtags, channel.name.lower(), week.compact]
     return VideoMetadata(title=weekly_title(stories, channel), description="\n".join(lines), tags=tags)
 
 
@@ -136,7 +123,7 @@ class WeeklyPipeline:
 
         log.info("[3/3] Rendering 1920×1080")
         week = WeekLabel.current()
-        style = WeeklyStyle(self.channel.name, self.channel.name, self.channel.accent, week.spaced)
+        style = WeeklyStyle(self.channel.name, self.channel.name, self.channel.accent, week.spaced, self.channel.lang)
         output = settings.paths.videos / f"weekly_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
         video = self.ctx.weekly_renderer.render(stories, audio_paths, style, output, music_path=pick_music(settings.paths.music))
         thumbnail = self._thumbnail(stories, week)
@@ -146,11 +133,23 @@ class WeeklyPipeline:
     def _thumbnail(self, stories: list[WeeklyStory], week: WeekLabel) -> Path:
         labels = [story.label for story in stories]
         try:
-            return self.ctx.thumbnails.story(self.channel.name, week.compact, labels, self.channel.accent, stories[0].pexels_query)
+            return self.ctx.thumbnails.story(
+                self.channel.name,
+                week.compact,
+                labels,
+                self.channel.accent,
+                stories[0].pexels_query,
+                tag=strings_for(self.channel.lang).weekly_card,
+            )
         except Exception as exc:
             log.warning("Story thumbnail failed (%s), falling back to minimalist", exc)
             return self.ctx.thumbnails.minimalist(
-                f"Главные события недели {week.compact}", self.channel.name, week.compact, labels, self.channel.accent
+                strings_for(self.channel.lang).weekly_thumbnail_title.format(week=week.compact),
+                self.channel.name,
+                week.compact,
+                labels,
+                self.channel.accent,
+                tag=strings_for(self.channel.lang).weekly_card,
             )
 
     def publish(self, draft: WeeklyDraft, publish_at: str | None = None) -> str:

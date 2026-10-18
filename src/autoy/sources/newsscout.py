@@ -88,7 +88,10 @@ class NewsScoutSource:
 
     @staticmethod
     def _client():
-        from newsscout import NewsScout
+        try:
+            from newsscout import NewsScout
+        except ImportError as exc:
+            raise RuntimeError("NewsScout is not installed. Run: pip install 'autoy[newsscout]'") from exc
 
         _install_prompt_hook()
         return NewsScout()

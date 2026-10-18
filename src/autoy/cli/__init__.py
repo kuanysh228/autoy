@@ -7,7 +7,7 @@ import sys
 from collections.abc import Sequence
 
 from autoy import __version__
-from autoy.channels import CHANNELS, get_channel
+from autoy.channels import CHANNELS, DEFAULT_CHANNEL, get_channel
 from autoy.config import get_settings
 from autoy.tts import BACKENDS
 
@@ -178,7 +178,7 @@ def build_parser() -> argparse.ArgumentParser:
     shorts.set_defaults(func=cmd_shorts)
 
     weekly = sub.add_parser("weekly", help="produce (and upload) the weekly digest")
-    _add_channel_arg(weekly, default="geo")
+    _add_channel_arg(weekly, default=DEFAULT_CHANNEL)
     weekly.add_argument("--no-upload", action="store_true")
     weekly.add_argument("--topics", type=int, default=8)
     weekly.add_argument("--publish-at", default=None)
@@ -191,7 +191,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     thumbnail = sub.add_parser("thumbnail", help="render weekly thumbnail variants")
     thumbnail.add_argument("title")
-    _add_channel_arg(thumbnail, default="geo")
+    _add_channel_arg(thumbnail, default=DEFAULT_CHANNEL)
     thumbnail.add_argument("--week", default=None)
     thumbnail.add_argument("--labels", nargs="*", default=None)
     thumbnail.add_argument("--query", default=None, help="Pexels query for the photo-backed variant")

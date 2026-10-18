@@ -29,4 +29,4 @@ Additional requirements (the response format is unchanged — still JSON only):
 
 
 def shorts_rules(lang: str) -> str:
-    return SHORTS_SCRIPT_RULES.get(lang, SHORTS_SCRIPT_RULES["ru"])
+    return SHORTS_SCRIPT_RULES.get(lang, SHORTS_SCRIPT_RULES["en"])

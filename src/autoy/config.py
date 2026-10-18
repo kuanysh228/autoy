@@ -7,6 +7,10 @@ from functools import lru_cache
 from pathlib import Path
 
 
+def resolve_home() -> Path:
+    return Path(os.environ.get("AUTOY_HOME") or Path.cwd()).resolve()
+
+
 def read_env_file(path: Path) -> dict[str, str]:
     values: dict[str, str] = {}
     if not path.is_file():
@@ -147,7 +151,7 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> Settings:
-        home = Path(os.environ.get("AUTOY_HOME") or Path.cwd()).resolve()
+        home = resolve_home()
         env = Env({**read_env_file(home / ".env"), **os.environ})
         paths = Paths(home=home)
         return cls(
@@ -159,17 +163,17 @@ class Settings:
             ),
             font_bold=env.str("FONT_BOLD", "/usr/share/fonts/liberation/LiberationSans-Bold.ttf"),
             font_regular=env.str("FONT_REGULAR", "/usr/share/fonts/liberation/LiberationSans-Regular.ttf"),
-            audio_lang=env.str("AUDIO_LANG", "ru"),
+            audio_lang=env.str("AUDIO_LANG", "en"),
             max_posts_per_day=env.int("MAX_POSTS_PER_DAY", 5),
             schedule_times=env.list("SCHEDULE_TIMES", "10:00,19:00"),
             weekly_time=env.str("WEEKLY_TIME", "10:00"),
-            weekly_channel=env.str("WEEKLY_CHANNEL", "geo"),
+            weekly_channel=env.str("WEEKLY_CHANNEL", "world"),
             weekly_max_topics=env.int("WEEKLY_MAX_TOPICS", 8),
             telegram_channel_times=env.list("TELEGRAM_CHANNEL_TIMES", "09:00,12:00,15:00,18:00,21:00"),
             telegram_bot_token=env.str("TELEGRAM_BOT_TOKEN"),
             telegram_chat_id=env.str("TELEGRAM_CHAT_ID"),
             telegram_channel_id=env.str("TELEGRAM_CHANNEL_ID"),
-            telegram_news_channel=env.str("TELEGRAM_NEWS_CHANNEL", "geo"),
+            telegram_news_channel=env.str("TELEGRAM_NEWS_CHANNEL", "world"),
             youtube_api_key=env.str("YOUTUBE_API_KEY"),
             youtube_daily_quota_units=env.int("YOUTUBE_DAILY_QUOTA_UNITS", 10_000),
             youtube_upload_quota_cost=env.int("YOUTUBE_UPLOAD_QUOTA_COST", 1_600),

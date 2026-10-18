@@ -1,0 +1,36 @@
+# Copy to channels.toml (git-ignored) in the project home to add or override channel profiles.
+# Built-in profiles: world, crypto, ai, business, billionaires. A key that matches a built-in one replaces it.
+
+# Channel used by the CLI and the bot when none is given (defaults to "world").
+default = "tech"
+
+[channels.tech]
+name = "TECH DAILY"                  # shown on the video, in descriptions and in Telegram
+lang = "en"                          # "en" or "ru": script rules, voices, metadata and on-screen text
+accent = "#00b4ff"                   # "#rrggbb" or [r, g, b]
+topics = [                           # picked at random, skipping anything covered recently
+  "smartphone launch news today",
+  "open source software news",
+  "cybersecurity breach news today",
+]
+hashtags = ["tech", "gadgets", "cybersecurity", "software"]
+
+# Optional per-channel settings (defaults shown)
+# max_script_chars = 420
+# badge = "BREAKING NEWS"
+# show_banner = true
+# music = true
+# music_subdir = "calm"                        # data/music/<subdir>
+# client_secret_file = "client_secret.json"    # OAuth client in credentials/
+# token_file = "tech_token.pickle"
+
+# Weekly digest segments: one story per entry
+[[channels.tech.weekly_topics]]
+label = "Phones"
+query = "smartphone news this week"
+pexels_query = "smartphone technology"      # photo search for the segment background
+
+[[channels.tech.weekly_topics]]
+label = "Security"
+query = "cybersecurity breach hacking news this week"
+pexels_query = "cyber security hacker computer"

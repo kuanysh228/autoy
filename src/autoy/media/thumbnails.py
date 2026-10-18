@@ -14,7 +14,7 @@ from autoy.models import RGB
 log = logging.getLogger(__name__)
 
 SIZE = (1280, 720)
-_TAG = "ИТОГИ НЕДЕЛИ"
+_DEFAULT_TAG = "WEEKLY RECAP"
 
 
 def _output(directory: Path, kind: str) -> Path:
@@ -35,6 +35,7 @@ class ThumbnailMaker:
         accent: RGB,
         pexels_query: str,
         output_path: Path | None = None,
+        tag: str = _DEFAULT_TAG,
     ) -> Path:
         output_path = output_path or _output(self.settings.paths.thumbnails, "story")
         images = self.pexels.search(pexels_query, 1, "landscape")
@@ -60,8 +61,8 @@ class ThumbnailMaker:
 
         tag_font = d.load_font(bold, 40)
         tag_y = 84
-        draw.rectangle([pad - 12, tag_y - 8, pad + d.text_width(tag_font, _TAG) + 16, tag_y + tag_font.size + 10], fill=accent)
-        draw.text((pad + 2, tag_y), _TAG, font=tag_font, fill=d.WHITE)
+        draw.rectangle([pad - 12, tag_y - 8, pad + d.text_width(tag_font, tag) + 16, tag_y + tag_font.size + 10], fill=accent)
+        draw.text((pad + 2, tag_y), tag, font=tag_font, fill=d.WHITE)
 
         keywords = [label.upper() for label in story_labels[:3]]
         size = 108
@@ -89,6 +90,7 @@ class ThumbnailMaker:
         story_labels: list[str],
         accent: RGB,
         output_path: Path | None = None,
+        tag: str = _DEFAULT_TAG,
     ) -> Path:
         output_path = output_path or _output(self.settings.paths.thumbnails, "minimal")
         width, height = SIZE
@@ -103,7 +105,7 @@ class ThumbnailMaker:
         draw.text((pad, 28), channel_name.upper(), font=header_font, fill=(160, 160, 180))
         draw.text((width - pad - d.text_width(header_font, week_label), 28), week_label, font=header_font, fill=(160, 160, 180))
 
-        d.draw_centered(draw, _TAG, 110, d.load_font(bold, 44), accent, width, shadow=False)
+        d.draw_centered(draw, tag, 110, d.load_font(bold, 44), accent, width, shadow=False)
         draw.rectangle([pad, 174, width - pad, 176], fill=accent)
 
         title_font = d.load_font(bold, 80)

@@ -1,5 +1,5 @@
 [Unit]
-Description=AUTOY Telegram control bot
+Description=autoy Telegram control bot
 After=network-online.target
 Wants=network-online.target
 

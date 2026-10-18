@@ -14,6 +14,7 @@ from autoy.media.ffmpeg import concat, encode_frames, encode_still, media_durati
 from autoy.media.kenburns import Slideshow
 from autoy.media.pexels import PexelsClient
 from autoy.models import RGB, WeeklyStory
+from autoy.strings import strings_for
 from autoy.text import split_sentences
 
 log = logging.getLogger(__name__)
@@ -41,6 +42,7 @@ class WeeklyStyle:
     theme: str
     accent: RGB
     week_label: str
+    lang: str = "en"
 
 
 @dataclass(frozen=True)
@@ -217,7 +219,7 @@ class WeeklyRenderer:
         frame = self._photo_background(background, 180, (4, 8, 25), (2, 4, 14))
         draw = ImageDraw.Draw(frame)
 
-        d.draw_centered(draw, "ИТОГИ НЕДЕЛИ", height // 2 - 200, d.load_font(bold, 96), d.WHITE, width)
+        d.draw_centered(draw, strings_for(style.lang).weekly_card, height // 2 - 200, d.load_font(bold, 96), d.WHITE, width)
         draw.rectangle([PAD * 3, height // 2 - 80, width - PAD * 3, height // 2 - 76], fill=style.accent)
         d.draw_badge(draw, style.theme, height // 2 - 52, d.load_font(bold, 60), style.accent, width, pad_x=30, pad_y=12)
         d.draw_centered(draw, style.week_label, height // 2 + 20, d.load_font(regular, 38), (180, 180, 180), width)
@@ -235,9 +237,10 @@ class WeeklyRenderer:
         frame = d.vertical_gradient(SIZE, (4, 8, 25), (2, 4, 14))
         draw = ImageDraw.Draw(frame)
         sub_font = d.load_font(regular, 40)
-        d.draw_centered(draw, "Спасибо за просмотр!", height // 2 - 80, d.load_font(bold, 72), d.WHITE, width)
-        d.draw_centered(draw, "Подписывайтесь, чтобы не пропускать", height // 2 + 20, sub_font, (190, 190, 190), width)
-        d.draw_centered(draw, "еженедельные итоги", height // 2 + 70, sub_font, (190, 190, 190), width)
+        text = strings_for(style.lang)
+        d.draw_centered(draw, text.outro_title, height // 2 - 80, d.load_font(bold, 72), d.WHITE, width)
+        d.draw_centered(draw, text.outro_lines[0], height // 2 + 20, sub_font, (190, 190, 190), width)
+        d.draw_centered(draw, text.outro_lines[1], height // 2 + 70, sub_font, (190, 190, 190), width)
         draw.rectangle([PAD * 3, height // 2 + 130, width - PAD * 3, height // 2 + 133], fill=style.accent)
         d.draw_centered(draw, style.channel_name, height // 2 + 160, d.load_font(bold, 48), d.WHITE, width)
         return frame

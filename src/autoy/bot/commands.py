@@ -6,7 +6,7 @@ import threading
 from collections.abc import Callable
 
 from autoy.bot.core import BotService
-from autoy.channels import CHANNELS
+from autoy.channels import CHANNELS, DEFAULT_CHANNEL
 from autoy.publish.channel_stats import MONETIZATION_SUBSCRIBERS, MONETIZATION_WATCH_SECONDS, fetch_realtime_stats
 
 log = logging.getLogger(__name__)
@@ -130,7 +130,7 @@ class CommandRouter:
 
     def stats(self, chat_id: int, args: list[str]) -> str:
         channel_ids = self.service.settings.youtube_channel_ids
-        key = args[0] if args and args[0] in channel_ids else "geo"
+        key = args[0] if args and args[0] in channel_ids else DEFAULT_CHANNEL
         channel_id = channel_ids.get(key)
         if not channel_id:
             return f"No YouTube channel id configured for '{key}' (YOUTUBE_CHANNEL_IDS)."
@@ -183,7 +183,7 @@ class CommandRouter:
         if args and args[0] in CHANNELS:
             channel, topic = args[0], " ".join(args[1:]).strip() or None
         else:
-            channel, topic = "geo", " ".join(args).strip() or None
+            channel, topic = DEFAULT_CHANNEL, " ".join(args).strip() or None
         _spawn(self.service.run_shorts_background, channel, topic, chat_id)
         return None
 
@@ -242,7 +242,7 @@ class CommandRouter:
         return f"Saved: weekly_{key} = {stored}"
 
     def weekly_now(self, chat_id: int, args: list[str]) -> None:
-        channel = args[0] if args and args[0] in CHANNELS else self.service.weekly_setting("channel", "geo")
+        channel = args[0] if args and args[0] in CHANNELS else self.service.weekly_setting("channel", DEFAULT_CHANNEL)
         _spawn(self.service.run_weekly_background, channel, chat_id)
         return None
 

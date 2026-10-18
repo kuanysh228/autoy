@@ -10,6 +10,7 @@ from pathlib import Path
 from autoy.channels import Channel
 from autoy.config import Settings
 from autoy.models import NewsItem
+from autoy.strings import strings_for
 from autoy.text import clean_for_description, clip_title
 
 log = logging.getLogger(__name__)
@@ -47,14 +48,14 @@ class VideoMetadata:
 
 def shorts_metadata(news: NewsItem, channel: Channel) -> VideoMetadata:
     direction_tag = news.direction.strip().lstrip("#")
-    base_hashtags = "#Shorts #News #WorldNews" if channel.is_english else "#Shorts #Новости #News"
+    text = strings_for(channel.lang)
     extra = list(channel.hashtags) or ["news", "shorts"]
     description = (
         f"{clean_for_description(news.text)}\n\n"
-        f"{'#' + direction_tag + ' ' if direction_tag else ''}{base_hashtags}\n\n"
+        f"{'#' + direction_tag + ' ' if direction_tag else ''}{text.shorts_hashtags}\n\n"
         f"{channel.name}\n" + " ".join(f"#{tag}" for tag in extra)
     )
-    tags = (["shorts", "news", "world news"] if channel.is_english else ["shorts", "новости", "news"]) + extra
+    tags = [*text.shorts_tags, *extra]
     if direction_tag:
         tags.insert(0, direction_tag)
     return VideoMetadata(title=clip_title(f"{news.title} #Shorts"), description=description, tags=tags)

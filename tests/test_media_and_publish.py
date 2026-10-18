@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from autoy.channels import get_channel
+from autoy.channels import Channel, get_channel
 from autoy.media.kenburns import Slideshow, ken_burns
 from autoy.media.shorts import is_power_word, karaoke_window, pexels_query_for, pick_music
 from autoy.models import NewsItem, WeeklyStory, WordEvent
@@ -49,16 +49,24 @@ def test_karaoke_window_groups_words():
 
 def test_pexels_query_mapping():
     assert pexels_query_for(NewsItem("x", "y", "#Bitcoin")) == "bitcoin cryptocurrency gold"
+    assert pexels_query_for(NewsItem("Missile strike hits city", "rockets overnight", "#War")) == "military soldiers conflict"
+    assert pexels_query_for(NewsItem("New sanctions", "against banks", "#Sanctions")) == "cargo port containers trade"
+    assert pexels_query_for(NewsItem("Quiet day", "nothing", "#Gardening")) == "gardening"
+    assert pexels_query_for(NewsItem("Quiet", "nothing", "")) == "breaking news world politics"
+
+
+def test_pexels_query_mapping_russian():
     assert pexels_query_for(NewsItem("Удар по Киеву", "ракеты", "#Война")) == "military soldiers conflict"
     assert pexels_query_for(NewsItem("Новые санкции", "против банков", "#Санкции")) == "cargo port containers trade"
-    assert pexels_query_for(NewsItem("Quiet day", "nothing", "#Gardening")) == "gardening"
     assert pexels_query_for(NewsItem("Тихо", "ничего", "")) == "breaking news world politics"
 
 
 def test_power_words():
+    assert is_power_word("Sanctions,")
     assert is_power_word("Санкции,")
     assert is_power_word("$5")
     assert is_power_word("2026")
+    assert not is_power_word("today")
     assert not is_power_word("сегодня")
 
 
@@ -71,12 +79,16 @@ def test_pick_music_prefers_subdir(tmp_path: Path):
     assert pick_music(tmp_path / "empty") is None
 
 
+def _russian_channel() -> Channel:
+    return Channel(key="ru", name="НОВОСТИ", lang="ru", accent=(1, 2, 3), topics=("x",), hashtags=("новости",))
+
+
 def test_shorts_metadata():
-    news = NewsItem("Это меняет всё: пошлины удвоены", "Текст [1] https://a.b", "#Торговля")
-    meta = shorts_metadata(news, get_channel("geo"))
-    assert meta.title == "Это меняет всё: пошлины удвоены #Shorts"
-    assert meta.tags[0] == "Торговля"
-    assert "#Торговля #Shorts #Новости #News" in meta.description
+    news = NewsItem("This changes everything: tariffs doubled", "Text [1] https://a.b", "#Trade")
+    meta = shorts_metadata(news, get_channel("world"))
+    assert meta.title == "This changes everything: tariffs doubled #Shorts"
+    assert meta.tags[:2] == ["Trade", "shorts"]
+    assert "#Trade #Shorts #News #WorldNews" in meta.description
     assert "https://" not in meta.description
     body = meta.body("2026-05-13T16:00:00Z")
     assert body["status"]["privacyStatus"] == "private"
@@ -84,19 +96,36 @@ def test_shorts_metadata():
     assert meta.body(None)["status"]["privacyStatus"] == "public"
 
 
+def test_shorts_metadata_russian_locale():
+    news = NewsItem("Это меняет всё: пошлины удвоены", "Текст [1] https://a.b", "#Торговля")
+    meta = shorts_metadata(news, _russian_channel())
+    assert meta.tags[0] == "Торговля"
+    assert "#Торговля #Shorts #Новости #News" in meta.description
+
+
 def test_weekly_title_and_chapters():
     stories = [
-        WeeklyStory("Украина", "Переговоры сорваны: фронт снова в огне после недели тишины и надежд.", "t", "#x", "q"),
-        WeeklyStory("Трамп", "Трамп ввёл пошлины", "t", "#y", "q"),
+        WeeklyStory("Ukraine", "Talks collapse: the front is on fire again after a week of silence.", "t", "#x", "q"),
+        WeeklyStory("Trump", "Trump imposes tariffs", "t", "#y", "q"),
     ]
-    channel = get_channel("geo")
+    channel = get_channel("world")
     title = weekly_title(stories, channel)
-    assert title.endswith(" — твой мир за неделю")
+    assert title.endswith(" — your world this week")
     assert len(title) <= 100
     meta = weekly_metadata(stories, channel, [5.5, 95.0], WeekLabel.current())
+    assert "0:00 Intro" in meta.description
+    assert "1:35 Trump: Trump imposes tariffs" in meta.description
+    assert "0:05 Ukraine" in meta.description
+    assert "#WORLDNEWS #WeeklyRecap" in meta.description
+
+
+def test_weekly_metadata_russian_locale():
+    stories = [WeeklyStory("Трамп", "Трамп ввёл пошлины", "t", "#y", "q")]
+    channel = _russian_channel()
+    assert weekly_title(stories, channel).endswith(" — твой мир за неделю")
+    meta = weekly_metadata(stories, channel, [5.0], WeekLabel.current())
     assert "0:00 Введение" in meta.description
-    assert "1:35 Трамп: Трамп ввёл пошлины" in meta.description
-    assert "0:05 Украина" in meta.description
+    assert weekly_title([], channel) == "Главное за неделю | НОВОСТИ"
 
 
 def test_channel_post_formatting():
@@ -113,3 +142,18 @@ def test_capped_speech_path(tmp_path: Path):
 
     capped = CappedSpeech(Speech(tmp_path / "a.mp3", [], Voice("v", "n")), "text")
     assert capped.path == tmp_path / "a.mp3"
+
+
+def test_badge_box_contains_its_text():
+    from PIL import ImageDraw, ImageFont
+
+    from autoy.media.draw import draw_badge
+
+    image = Image.new("RGB", (400, 200))
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.load_default(40)
+    accent = (200, 0, 0)
+    bottom = draw_badge(draw, "BREAKING", 60, font, accent, 400, pad_x=20, pad_y=10)
+    left, top, right, ink_bottom = draw.textbbox((0, 0), "BREAKING", font=font)
+    assert image.getbbox() == ((400 - (right - left)) // 2 - 20, 60 + top - 10, (400 + (right - left)) // 2 + 21, 60 + ink_bottom + 11)
+    assert bottom == 60 + ink_bottom

@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 
 from autoy.bot.core import BotService
+from autoy.channels import DEFAULT_CHANNEL
 from autoy.pipeline.jobs import run_telegram_channel_job
 from autoy.publish.channel_stats import SUBSCRIBER_MILESTONES, VIEW_MILESTONES, fetch_realtime_stats
 
@@ -48,7 +49,7 @@ class ScheduleLoop:
             and self.service.weekly_setting("enabled", "1") == "1"
         ):
             self._weekly_fired_on = today
-            channel = self.service.weekly_setting("channel", "geo")
+            channel = self.service.weekly_setting("channel", DEFAULT_CHANNEL)
             log.info("Starting weekly digest (Sunday %s)", hhmm)
             threading.Thread(target=self.service.run_weekly_background, args=(channel, owner), daemon=True).start()
 

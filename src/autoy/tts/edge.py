@@ -27,7 +27,7 @@ GTTS_FALLBACK = Voice(id="gtts_fallback", name="gtts")
 
 
 def voices_for(lang: str) -> tuple[Voice, ...]:
-    return VOICE_POOL.get(lang, VOICE_POOL["ru"])
+    return VOICE_POOL.get(lang, VOICE_POOL["en"])
 
 
 def find_voice(lang: str, voice_id: str) -> Voice | None:
