@@ -12,7 +12,7 @@ from autoy.config import get_settings
 from autoy.tts import BACKENDS
 
 _LOG_FORMAT = "[%(asctime)s] %(levelname)s | %(message)s"
-_QUIET_LOGGERS = ("newsscout", "httpx", "httpcore")
+_QUIET_LOGGERS = ("notebooklm", "httpx", "httpcore")
 
 
 def setup_logging(log_file: str | None = None) -> None:

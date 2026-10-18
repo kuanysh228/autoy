@@ -36,3 +36,13 @@ jobs:
       - run: pip install build twine
       - run: python -m build
       - run: twine check dist/*
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t autoy .
+      - run: docker run --rm autoy --version
+      - run: >
+          docker run --rm --entrypoint python autoy -c
+          "import os; from autoy.config import Settings; s = Settings.from_env(); assert os.path.isfile(s.font_bold), s.font_bold"

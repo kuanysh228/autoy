@@ -36,7 +36,7 @@
 
 ```mermaid
 flowchart LR
-    T[Topic] --> R[NewsScout<br/>LLM research]
+    T[Topic] --> R[Research<br/>NotebookLM + web]
     R --> Q[Quality gates<br/>cleanup · dedup]
     Q --> V[TTS<br/>edge · piper · silero]
     V --> F[ffmpeg render<br/>Ken Burns · karaoke]
@@ -53,7 +53,7 @@ The pipeline objects (`ShortsPipeline.produce()` → `ShortsDraft` → `publish(
 - Python 3.11+
 - `ffmpeg` and `ffprobe` on `PATH`
 - A TrueType font (defaults to Liberation Sans; override with `FONT_BOLD` / `FONT_REGULAR`)
-- [NewsScout](https://github.com/kuanysh228/NewsScout) for research — installed with the `newsscout` extra
+- A Google account with access to [NotebookLM](https://notebooklm.google.com/) for the research step (see [Research login](#research-login)); without it autoy falls back to Google News RSS
 - A Google Cloud project with the **YouTube Data API v3** enabled and an OAuth 2.0 desktop client
 - Optional: a [Pexels](https://www.pexels.com/api/) key for stock photos, a Telegram bot token
 
@@ -62,11 +62,13 @@ The pipeline objects (`ShortsPipeline.produce()` → `ShortsDraft` → `publish(
 ```bash
 git clone https://github.com/kuanysh228/autoy.git && cd autoy
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[newsscout,dev]"
+pip install -e ".[login,dev]"
 
 cp .env.example .env            # fill in tokens and keys
 mkdir -p credentials            # put client_secret.json here
-autoy authorize world           # one-time OAuth flow per channel
+playwright install chromium     # browser for the one-time NotebookLM login
+notebooklm login                # research login, see below
+autoy authorize world           # one-time YouTube OAuth flow per channel
 autoy shorts --no-upload        # render a video locally
 autoy shorts "Iran nuclear deal news today" --channel world
 ```
@@ -79,6 +81,12 @@ Want to see the renderer first? No keys needed:
 pip install -e .
 python examples/render_demo.py     # writes output/videos/demo.mp4
 ```
+
+## Research login
+
+The research step runs inside a throwaway [NotebookLM](https://notebooklm.google.com/) notebook (via the [`notebooklm-py`](https://pypi.org/project/notebooklm-py/) client, bundled as a dependency): autoy starts a web research, imports the top sources, asks for a structured article, and deletes the notebook afterwards.
+
+Sign in once with `notebooklm login` (needs the `login` extra and `playwright install chromium`). The session is stored in `~/.notebooklm/storage_state.json`; set `NOTEBOOKLM_HOME` to move it, or `NOTEBOOKLM_AUTH_JSON` to pass the session inline on a headless server. If research fails or the session expires, autoy logs a warning and falls back to a Google News RSS summary so scheduled runs keep going.
 
 ## Channels
 
@@ -157,7 +165,8 @@ src/autoy/
 ├── storage.py      SQLite: PostRegistry (dedup, history) and BotStore (schedule, settings, reviews)
 ├── dedup.py        topic cooldown and fuzzy title matching
 ├── text/           voiceover preprocessing and script shaping (pure functions, fully tested)
-├── sources/        NewsScout adapter with prompt rules, Google News RSS fallback
+├── research/       NotebookLM research pipeline: prompts, service wrapper, article parsing
+├── sources/        research adapter with script quality gates and Google News RSS fallback
 ├── tts/            Synthesizer protocol, edge / piper / silero backends, duration capping
 ├── media/          ffmpeg piping, drawing helpers, Pexels client, Ken Burns, Shorts & weekly renderers, thumbnails
 ├── publish/        YouTube client + metadata, Telegram notifier / channel publisher, channel stats
@@ -177,11 +186,17 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now autoy-bot autoy-scheduler
 ```
 
-**Docker.** A [`Dockerfile`](Dockerfile) and a [`docker-compose.yml`](docker-compose.yml) run the bot and the scheduler with `credentials/`, `data/` and `output/` mounted from the host:
+**Docker.** The [`Dockerfile`](Dockerfile) bundles Python, ffmpeg and fonts; [`docker-compose.yml`](docker-compose.yml) runs the bot and the scheduler. Both logins open a browser, so do them once on the host and let the containers reuse the files:
 
 ```bash
+cp .env.example .env && mkdir -p credentials output      # fill in .env, add credentials/client_secret.json
+pip install -e ".[login]" && playwright install chromium
+autoy authorize world                                    # writes credentials/world_token.pickle
+NOTEBOOKLM_HOME=credentials/notebooklm notebooklm login  # writes credentials/notebooklm/storage_state.json
 docker compose up -d
 ```
+
+The container runs as uid 1000, so `credentials/` and `output/` must be readable and writable by that user. The database and cache live in named volumes.
 
 ## Responsible use
 

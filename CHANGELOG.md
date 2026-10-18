@@ -6,7 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
-- Shorts pipeline: topic selection, NewsScout research, script quality gates, neural TTS, karaoke-subtitle renderer and YouTube upload.
+- Shorts pipeline: topic selection, NotebookLM-based research (built in), script quality gates, neural TTS, karaoke-subtitle renderer and YouTube upload.
 - Weekly digest with chapters, per-segment narration and thumbnails.
 - Telegram control bot with review mode, SQLite schedule, daily limit, quota estimate and milestone alerts.
 - Telegram channel auto-posting.
@@ -18,3 +18,6 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Fixed
 
 - Badge on the video header no longer overflows its background box.
+- Weekly digest research now uses the channel language; the article language and the chat prompt are passed through correctly.
+- The Google News RSS fallback respects the channel script limit instead of producing a script too long for a Short.
+- Fonts are auto-detected (Liberation Sans or DejaVu Sans) when `FONT_BOLD` / `FONT_REGULAR` are not set, which fixes the Docker image.

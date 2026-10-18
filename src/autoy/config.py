@@ -11,6 +11,21 @@ def resolve_home() -> Path:
     return Path(os.environ.get("AUTOY_HOME") or Path.cwd()).resolve()
 
 
+_FONT_DIRS = (
+    "/usr/share/fonts/liberation",
+    "/usr/share/fonts/truetype/liberation",
+    "/usr/share/fonts/liberation-sans",
+    "/usr/share/fonts/truetype/dejavu",
+    "/usr/share/fonts/dejavu",
+)
+
+
+def find_font(bold: bool) -> str:
+    names = ("LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf") if bold else ("LiberationSans-Regular.ttf", "DejaVuSans.ttf")
+    candidates = [Path(directory) / name for name in names for directory in _FONT_DIRS]
+    return str(next((path for path in candidates if path.is_file()), candidates[0]))
+
+
 def read_env_file(path: Path) -> dict[str, str]:
     values: dict[str, str] = {}
     if not path.is_file():
@@ -161,8 +176,8 @@ class Settings:
                 max_duration_sec=env.float("MAX_DURATION_SEC", 34.0),
                 scene_duration_sec=env.float("SCENE_DURATION_SEC", 2.2),
             ),
-            font_bold=env.str("FONT_BOLD", "/usr/share/fonts/liberation/LiberationSans-Bold.ttf"),
-            font_regular=env.str("FONT_REGULAR", "/usr/share/fonts/liberation/LiberationSans-Regular.ttf"),
+            font_bold=env.str("FONT_BOLD") or find_font(bold=True),
+            font_regular=env.str("FONT_REGULAR") or find_font(bold=False),
             audio_lang=env.str("AUDIO_LANG", "en"),
             max_posts_per_day=env.int("MAX_POSTS_PER_DAY", 5),
             schedule_times=env.list("SCHEDULE_TIMES", "10:00,19:00"),

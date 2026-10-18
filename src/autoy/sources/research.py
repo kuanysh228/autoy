@@ -3,10 +3,10 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Sequence
-from contextvars import ContextVar
 
 from autoy.channels import WeeklyTopic
 from autoy.models import NewsItem, WeeklyStory
+from autoy.research import ResearchPipeline
 from autoy.sources import google_news
 from autoy.sources.prompts import shorts_rules
 from autoy.text import (
@@ -26,23 +26,9 @@ DEFAULT_MAX_CHARS = 900
 WEEKLY_MAX_CHARS = 1700
 WEEKLY_MIN_CHARS = 200
 _ATTEMPTS = 3
-_article_rules: ContextVar[str] = ContextVar("autoy_article_rules", default="")
 
 
-def _install_prompt_hook() -> None:
-    from newsscout import pipeline, prompts
-
-    if getattr(pipeline.build_article_question, "autoy_hook", False):
-        return
-
-    def with_rules(user_query: str, language: str | None = None) -> str:
-        return prompts.build_article_question(user_query, language=language) + _article_rules.get()
-
-    with_rules.autoy_hook = True
-    pipeline.build_article_question = with_rules
-
-
-def _fallback_from_rss(topic: str, lang: str, reason: Exception) -> NewsItem:
+def _fallback_from_rss(topic: str, lang: str, reason: Exception, max_chars: int = DEFAULT_MAX_CHARS) -> NewsItem:
     items = google_news.search(topic, lang)
     if not items:
         raise TextQualityError(f"RSS fallback found nothing: {reason}") from reason
@@ -73,41 +59,27 @@ def _fallback_from_rss(topic: str, lang: str, reason: Exception) -> NewsItem:
             "Пока это больше похоже на напряжённую паузу, чем на окончательное урегулирование."
         )
 
-    log.warning("NewsScout fallback: using Google News RSS after error: %s", reason)
+    log.warning("Research fallback: using Google News RSS after error: %s", reason)
     return NewsItem(
         title=title,
-        text=prepare_voiceover_text(truncate_tail(text, DEFAULT_MAX_CHARS, 240), lang=lang),
+        text=prepare_voiceover_text(truncate_to_limit(text, max_chars), lang=lang),
         direction=f"#{topic.split()[0].capitalize()}",
         sources=[item.source_url or item.link for item in items[:4] if item.source_url or item.link],
     )
 
 
-class NewsScoutSource:
-    def __init__(self, attempts: int = _ATTEMPTS) -> None:
+class ResearchSource:
+    def __init__(self, attempts: int = _ATTEMPTS, pipeline: ResearchPipeline | None = None) -> None:
         self.attempts = attempts
-
-    @staticmethod
-    def _client():
-        try:
-            from newsscout import NewsScout
-        except ImportError as exc:
-            raise RuntimeError("NewsScout is not installed. Run: pip install 'autoy[newsscout]'") from exc
-
-        _install_prompt_hook()
-        return NewsScout()
+        self.pipeline = pipeline or ResearchPipeline()
 
     async def fetch_short(self, topic: str, lang: str, max_chars: int = DEFAULT_MAX_CHARS) -> NewsItem:
-        log.info("NewsScout: '%s' [%s] max_chars=%d", topic, lang, max_chars)
-        scout = self._client()
+        log.info("Research: '%s' [%s] max_chars=%d", topic, lang, max_chars)
         last_error: Exception | None = None
 
         for attempt in range(1, self.attempts + 1):
             try:
-                token = _article_rules.set(shorts_rules(lang))
-                try:
-                    article = await scout.generate(topic, language=lang)
-                finally:
-                    _article_rules.reset(token)
+                article = await self.pipeline.run(topic, language=lang, rules=shorts_rules(lang))
                 candidate = prepare_voiceover_text(remove_source_refs(article.text), lang=lang)
                 text = prepare_voiceover_text(truncate_to_limit(candidate, max_chars), lang=lang)
                 if has_filler(text):
@@ -118,19 +90,18 @@ class NewsScoutSource:
                 return NewsItem(title=article.title, text=text, direction=article.direction)
             except TextQualityError as exc:
                 last_error = exc
-                log.warning("NewsScout: unusable script, attempt %d/%d: %s", attempt, self.attempts, exc)
+                log.warning("Research: unusable script, attempt %d/%d: %s", attempt, self.attempts, exc)
             except Exception as exc:
                 last_error = exc
-                log.warning("NewsScout: generation failed, attempt %d/%d: %s", attempt, self.attempts, exc)
+                log.warning("Research: generation failed, attempt %d/%d: %s", attempt, self.attempts, exc)
 
-        return _fallback_from_rss(topic, lang, last_error or TextQualityError("unknown NewsScout error"))
+        return _fallback_from_rss(topic, lang, last_error or TextQualityError("unknown research error"), max_chars)
 
     async def fetch_story(self, topic: WeeklyTopic, lang: str) -> WeeklyStory | None:
-        scout = self._client()
         last_error: Exception | None = None
         for attempt in range(1, self.attempts + 1):
             try:
-                article = await scout.generate(topic.query)
+                article = await self.pipeline.run(topic.query, language=lang)
                 candidate = prepare_voiceover_text(remove_source_refs(article.text), lang=lang)
                 text = prepare_voiceover_text(truncate_tail(candidate, WEEKLY_MAX_CHARS, 400), lang=lang)
                 if len(text) < WEEKLY_MIN_CHARS:

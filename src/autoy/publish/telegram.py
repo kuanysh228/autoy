@@ -13,7 +13,7 @@ from autoy.channels import Channel
 from autoy.config import Settings
 from autoy.dedup import pick_fresh_topic
 from autoy.models import NewsItem
-from autoy.sources import NewsScoutSource
+from autoy.sources import ResearchSource
 from autoy.storage import PostRegistry
 from autoy.text import truncate_tail
 
@@ -76,7 +76,7 @@ def format_channel_post(news: NewsItem) -> str:
 
 
 class ChannelPublisher:
-    def __init__(self, settings: Settings, registry: PostRegistry, source: NewsScoutSource) -> None:
+    def __init__(self, settings: Settings, registry: PostRegistry, source: ResearchSource) -> None:
         self.settings = settings
         self.registry = registry
         self.source = source

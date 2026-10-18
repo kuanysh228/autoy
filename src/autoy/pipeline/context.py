@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from autoy.config import Settings, get_settings
 from autoy.media import PexelsClient, ShortsRenderer, ThumbnailMaker, WeeklyRenderer
 from autoy.publish import Notifier
-from autoy.sources import NewsScoutSource
+from autoy.sources import ResearchSource
 from autoy.storage import PostRegistry
 from autoy.tts import Synthesizer, build_synthesizer
 
@@ -14,7 +14,7 @@ from autoy.tts import Synthesizer, build_synthesizer
 class AppContext:
     settings: Settings
     registry: PostRegistry
-    source: NewsScoutSource
+    source: ResearchSource
     notifier: Notifier
     pexels: PexelsClient
     synthesizer: Synthesizer
@@ -33,7 +33,7 @@ class AppContext:
         return cls(
             settings=settings,
             registry=PostRegistry(settings.paths.pipeline_db),
-            source=NewsScoutSource(),
+            source=ResearchSource(),
             notifier=Notifier.from_settings(settings),
             pexels=PexelsClient(settings.pexels_api_key, settings.paths.cache / "pexels"),
             synthesizer=build_synthesizer(tts_backend, settings),

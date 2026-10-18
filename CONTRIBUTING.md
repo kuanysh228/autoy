@@ -26,7 +26,7 @@ CI runs the same checks on Python 3.11, 3.12 and 3.13.
 
 - Keep changes focused; one concern per pull request.
 - Add or update tests for behaviour changes. Pure functions in `text/`, `dedup.py` and the metadata builders are cheap to test, so prefer testing there.
-- Business flow lives in `pipeline/`. The CLI, scheduler and bot stay thin adapters.
+- Business flow lives in `pipeline/`; research prompts and the NotebookLM wrapper live in `research/`. The CLI, scheduler and bot stay thin adapters.
 - Everything user-facing is English by default. Locale-specific text belongs in `strings.py`, prompts in `sources/prompts.py`.
 - Update `README.md`, `.env.example` or `channels.example.toml` when you change user-facing behaviour, and add a line to `CHANGELOG.md`.
 

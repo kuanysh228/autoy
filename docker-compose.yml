@@ -1,12 +1,14 @@
+# Before the first start (see README, "Docker"): create .env, put client_secret.json and the
+# generated OAuth tokens in ./credentials, and run `mkdir -p credentials output`.
 x-autoy: &autoy
   build: .
   restart: unless-stopped
   env_file: .env
   volumes:
     - ./credentials:/app/credentials
-    - ./data:/app/data
     - ./output:/app/output
-    - ./cache:/app/cache
+    - data:/app/data
+    - cache:/app/cache
     # - ./channels.toml:/app/channels.toml:ro   # create the file first (see channels.example.toml)
 
 services:
@@ -17,3 +19,7 @@ services:
   scheduler:
     <<: *autoy
     command: ["scheduler", "world"]
+
+volumes:
+  data:
+  cache:
